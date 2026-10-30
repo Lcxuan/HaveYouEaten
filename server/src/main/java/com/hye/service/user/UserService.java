@@ -11,7 +11,7 @@ import com.hye.controller.user.vo.UserLoginVO;
 public interface UserService {
 
     /**
-     * 注册：校验用户名与手机号唯一后创建账号。
+     * 注册
      *
      * @param dto 注册参数
      * @return 用户 id
@@ -19,7 +19,7 @@ public interface UserService {
     Long register(UserRegisterDTO dto);
 
     /**
-     * 登录：校验账号密码，签发 access token 与 refresh token。
+     * 登录
      *
      * @param dto 登录参数
      * @return 用户信息与令牌对
@@ -27,10 +27,15 @@ public interface UserService {
     UserLoginVO login(UserLoginDTO dto);
 
     /**
-     * 刷新令牌：校验 refresh token，轮换签发新的令牌对。
+     * 刷新令牌
      *
      * @param dto 刷新参数
      * @return 新的令牌对
      */
     UserLoginVO refresh(UserRefreshDTO dto);
+
+    /**
+     * 退出登录
+     */
+    void logout();
 }

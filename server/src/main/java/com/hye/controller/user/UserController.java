@@ -39,7 +39,7 @@ public class UserController {
     }
 
     /**
-     * 登录，返回用户信息与 Sa-Token 令牌。
+     * 登录
      *
      * @param dto 登录参数
      * @return 用户信息与令牌
@@ -51,7 +51,7 @@ public class UserController {
     }
 
     /**
-     * 刷新令牌：用 refresh token 换取新的令牌对。
+     * 刷新令牌
      *
      * @param dto 刷新参数
      * @return 新的令牌对
@@ -60,5 +60,17 @@ public class UserController {
     @Operation(summary = "刷新令牌")
     public Result<UserLoginVO> refresh(@Valid @RequestBody UserRefreshDTO dto) {
         return Result.success(userService.refresh(dto));
+    }
+
+    /**
+     * 退出登录
+     *
+     * @return 空结果
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "退出登录")
+    public Result<Void> logout() {
+        userService.logout();
+        return Result.success();
     }
 }

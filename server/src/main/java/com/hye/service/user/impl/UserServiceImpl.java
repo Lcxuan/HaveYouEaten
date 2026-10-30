@@ -86,13 +86,27 @@ public class UserServiceImpl implements UserService {
         return issueTokens(user);
     }
 
+    @Override
+    public void logout() {
+        // 凭当前 access token 反查本会话的 refresh token，一并作废
+        String accessToken = StpUtil.getTokenValue();
+        String refreshToken = authRedis.getRefreshTokenByAccessToken(accessToken);
+        if (StringUtils.hasText(refreshToken)) {
+            authRedis.deleteRefreshToken(refreshToken);
+        }
+        authRedis.deleteRefreshTokenOf(accessToken);
+        // 销毁当前 Sa-Token 会话，使 access token 失效
+        StpUtil.logout();
+    }
+
     /**
      * 签发令牌对：Sa-Token 会话作为短效 access token，自生成 refresh token 存 Redis。
      */
     private UserLoginVO issueTokens(UserDO user) {
         StpUtil.login(user.getId());
-        String refreshToken = IdUtil.simpleUUID();
+        String refreshToken = IdUtil.randomUUID();
         authRedis.setRefreshToken(refreshToken, user.getId(), refreshTokenProperties.getRefreshTimeoutDuration());
+        authRedis.setRefreshTokenOf(StpUtil.getTokenValue(), refreshToken, refreshTokenProperties.getRefreshTimeoutDuration());
         return UserLoginVO.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())

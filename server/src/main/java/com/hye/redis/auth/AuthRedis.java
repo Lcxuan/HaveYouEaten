@@ -27,6 +27,11 @@ public class AuthRedis {
      */
     private static final String REFRESH_TOKEN_KEY = "auth:refresh:";
 
+    /**
+     * 反向映射 key 段，完整 key 为 {app}:auth:refresh-of:{accessToken}
+     */
+    private static final String REFRESH_OF_KEY = "auth:refresh-of:";
+
     private final String keyPrefix;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -96,6 +101,36 @@ public class AuthRedis {
      */
     public void deleteRefreshToken(String refreshToken) {
         stringRedisTemplate.delete(key(REFRESH_TOKEN_KEY, refreshToken));
+    }
+
+    /**
+     * 保存 access token 到 refresh token 的反向映射（与 refresh token 相同 TTL）。
+     *
+     * @param accessToken  访问令牌
+     * @param refreshToken 刷新令牌
+     * @param ttl          有效期
+     */
+    public void setRefreshTokenOf(String accessToken, String refreshToken, Duration ttl) {
+        stringRedisTemplate.opsForValue().set(key(REFRESH_OF_KEY, accessToken), refreshToken, ttl);
+    }
+
+    /**
+     * 读取 access token 对应的 refresh token。
+     *
+     * @param accessToken 访问令牌
+     * @return 刷新令牌，不存在或已过期返回 null
+     */
+    public String getRefreshTokenByAccessToken(String accessToken) {
+        return stringRedisTemplate.opsForValue().get(key(REFRESH_OF_KEY, accessToken));
+    }
+
+    /**
+     * 删除 access token 的反向映射（登出时清理）。
+     *
+     * @param accessToken 访问令牌
+     */
+    public void deleteRefreshTokenOf(String accessToken) {
+        stringRedisTemplate.delete(key(REFRESH_OF_KEY, accessToken));
     }
 
     /**
