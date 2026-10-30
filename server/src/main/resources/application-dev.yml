@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:postgresql://127.0.0.1:5432/have_you_eaten
+    username: postgres
+    password: ${POSTGRES_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  ai:
+    openai:
+      # LLM 接入走 OpenAI 兼容协议，切换模型厂商只需改 base-url
+      api-key: ${LLM_API_KEY:sk-placeholder}
+      base-url: ${LLM_BASE_URL:https://api.openai.com}
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+sa-token:
+  token-name: Authorization
+  timeout: 7200
+  # refresh token 有效期（秒），默认 30 天（自定义扩展属性，见 RefreshTokenProperties）
+  refresh-timeout: 2592000
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+hye:
+  security:
+    # 动态 Token + 签名鉴权：两项均配置才启用，任一留空则为开发模式（不校验）
+    app-key: ${AUTH_APP_KEY:}
+    sign-secret: ${AUTH_SECRET:}
+    # access token 有效期（秒），默认 2 小时
+    token-ttl-seconds: 7200
+    # 请求时间戳允许窗口（秒），默认 ±300
+    timestamp-window-seconds: 300

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: have-you-eaten
+  profiles:
+    active: my
+
+swagger:
+  info:
+    title: Have You Eaten 接口文档
+    description: Have You Eaten（吃了吗？）后端 API 接口文档
+    version: 1.0.0
+    author: Lcxuan
+    url:
+    license-url:
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.hye.**.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+mybatis-plus-join:
+  banner: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

@@ -1,0 +1,10 @@
+${AnsiColor.BRIGHT_YELLOW}
+        ( (
+         ) )
+      .........
+      |       |]      你吃了吗？
+      \       /
+       `-----'
+${AnsiColor.BRIGHT_GREEN}
+      have-you-eaten  ::  Spring Boot ${spring-boot.version}
+${AnsiColor.DEFAULT}
