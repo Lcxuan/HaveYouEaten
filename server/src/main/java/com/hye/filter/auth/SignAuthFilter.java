@@ -3,13 +3,12 @@ package com.hye.filter.auth;
 import com.hye.common.utils.SignUtils;
 import com.hye.config.AuthProperties;
 import com.hye.enums.auth.AuthHeaderConstants;
-import com.hye.redis.auth.AuthRedisKey;
+import com.hye.redis.auth.AuthRedis;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
@@ -31,11 +30,11 @@ public class SignAuthFilter extends OncePerRequestFilter {
 
     private final AuthProperties authProperties;
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final AuthRedis authRedis;
 
-    public SignAuthFilter(AuthProperties authProperties, StringRedisTemplate stringRedisTemplate) {
+    public SignAuthFilter(AuthProperties authProperties, AuthRedis authRedis) {
         this.authProperties = authProperties;
-        this.stringRedisTemplate = stringRedisTemplate;
+        this.authRedis = authRedis;
     }
 
     @Override
@@ -58,7 +57,7 @@ public class SignAuthFilter extends OncePerRequestFilter {
         }
         Boolean tokenExists;
         try {
-            tokenExists = stringRedisTemplate.hasKey(AuthRedisKey.TOKEN_KEY_PREFIX + token);
+            tokenExists = authRedis.hasDeviceToken(token);
         } catch (Exception e) {
             log.error("鉴权 Redis 访问失败", e);
             reject(response, "500", "鉴权服务异常");
@@ -96,8 +95,7 @@ public class SignAuthFilter extends OncePerRequestFilter {
         // 4. nonce 防重放：SETNX 占位，占用失败即重复请求
         Boolean firstTime;
         try {
-            firstTime = stringRedisTemplate.opsForValue().setIfAbsent(
-                    AuthRedisKey.NONCE_KEY_PREFIX + nonce, "1",
+            firstTime = authRedis.trySetNonce(nonce,
                     Duration.ofSeconds(authProperties.getTimestampWindowSeconds() * 2));
         } catch (Exception e) {
             log.error("鉴权 Redis 访问失败", e);

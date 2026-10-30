@@ -4,6 +4,7 @@ import com.hye.common.enums.WebFilterConstant;
 import com.hye.common.resolver.HeaderBindArgumentResolver;
 import com.hye.config.filter.CachedBodyFilter;
 import com.hye.filter.auth.SignAuthFilter;
+import com.hye.redis.auth.AuthRedis;
 import jakarta.servlet.Filter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -51,8 +52,8 @@ public class WebConfig implements WebMvcConfigurer {
      * 注册签名鉴权过滤器
      */
     @Bean
-    public FilterRegistrationBean<SignAuthFilter> signAuthFilter(AuthProperties authProperties, StringRedisTemplate stringRedisTemplate) {
-        return createFilterBean(new SignAuthFilter(authProperties, stringRedisTemplate), WebFilterConstant.SIGN_AUTH_FILTER_ORDER);
+    public FilterRegistrationBean<SignAuthFilter> signAuthFilter(AuthProperties authProperties, AuthRedis authRedis) {
+        return createFilterBean(new SignAuthFilter(authProperties, authRedis), WebFilterConstant.SIGN_AUTH_FILTER_ORDER);
     }
 
     /**

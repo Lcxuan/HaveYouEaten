@@ -14,7 +14,7 @@ import com.hye.entity.UserDO;
 import com.hye.enums.exception.BusinessErrorCodeConstants;
 import com.hye.enums.exception.BusinessException;
 import com.hye.mapper.UserMapper;
-import com.hye.redis.auth.AuthRedisKey;
+import com.hye.redis.auth.AuthRedis;
 import com.hye.service.user.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
     private RefreshTokenProperties refreshTokenProperties;
 
     @Resource
-    private AuthRedisKey authRedisKey;
+    private AuthRedis authRedis;
 
     @Override
     public Long register(UserRegisterDTO dto) {
@@ -70,12 +70,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserLoginVO refresh(UserRefreshDTO dto) {
-        String userId = authRedisKey.getRefreshTokenUserId(dto.getRefreshToken());
+        String userId = authRedis.getRefreshTokenUserId(dto.getRefreshToken());
         if (!StringUtils.hasText(userId)) {
             throw new BusinessException(BusinessErrorCodeConstants.REFRESH_TOKEN_INVALID);
         }
         // 轮换：作废旧 refresh token，防止重复使用
-        authRedisKey.deleteRefreshToken(dto.getRefreshToken());
+        authRedis.deleteRefreshToken(dto.getRefreshToken());
         UserDO user = userMapper.selectById(Long.valueOf(userId));
         if (user == null) {
             throw new BusinessException(BusinessErrorCodeConstants.USER_NOT_FOUND);
@@ -91,8 +91,8 @@ public class UserServiceImpl implements UserService {
      */
     private UserLoginVO issueTokens(UserDO user) {
         StpUtil.login(user.getId());
-        String refreshToken = IdUtil.fastSimpleUUID();
-        authRedisKey.setRefreshToken(refreshToken, user.getId(), refreshTokenProperties.getRefreshTimeoutDuration());
+        String refreshToken = IdUtil.simpleUUID();
+        authRedis.setRefreshToken(refreshToken, user.getId(), refreshTokenProperties.getRefreshTimeoutDuration());
         return UserLoginVO.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())

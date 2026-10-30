@@ -34,3 +34,7 @@ management:
     web:
       exposure:
         include: health
+
+hye:
+  # 应用名，同时作为 Redis key 前缀
+  name: have-you-eaten

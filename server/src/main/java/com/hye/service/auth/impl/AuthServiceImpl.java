@@ -7,11 +7,10 @@ import com.hye.controller.auth.vo.AuthHandshakeVO;
 import com.hye.enums.exception.BusinessException;
 import com.hye.enums.exception.GlobalErrorCodeConstants;
 import com.hye.common.utils.SignUtils;
-import com.hye.redis.auth.AuthRedisKey;
+import com.hye.redis.auth.AuthRedis;
 import com.hye.service.auth.AuthService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     private AuthProperties authProperties;
 
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private AuthRedis authRedis;
 
     @Override
     public AuthHandshakeVO handshake(AuthHandshakeDTO dto) {
@@ -57,8 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private void occupyNonce(String nonce) {
         Boolean firstTime;
         try {
-            firstTime = stringRedisTemplate.opsForValue().setIfAbsent(
-                    AuthRedisKey.NONCE_KEY_PREFIX + nonce, "1",
+            firstTime = authRedis.trySetNonce(nonce,
                     Duration.ofSeconds(authProperties.getTimestampWindowSeconds() * 2));
         } catch (Exception e) {
             log.error("握手 nonce 占位失败", e);
@@ -75,8 +73,7 @@ public class AuthServiceImpl implements AuthService {
     private String issueToken() {
         String token = IdUtil.fastSimpleUUID();
         try {
-            stringRedisTemplate.opsForValue().set(
-                    AuthRedisKey.TOKEN_KEY_PREFIX + token, "1", Duration.ofSeconds(authProperties.getTokenTtlSeconds()));
+            authRedis.setDeviceToken(token, Duration.ofSeconds(authProperties.getTokenTtlSeconds()));
         } catch (Exception e) {
             log.error("握手写入 token 失败", e);
             throw new BusinessException(GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR, "鉴权服务异常");

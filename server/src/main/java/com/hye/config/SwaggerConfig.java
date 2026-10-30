@@ -54,13 +54,14 @@ public class SwaggerConfig {
     }
 
     /**
-     * 补充鉴权请求头：所有接口带签名四件套，握手接口额外带 X-App-Key。
+     * 补充鉴权请求头：所有接口带签名四件套与用户登录令牌，握手接口额外带 X-App-Key 且无需登录。
      */
     private static void addAuthHeaders(Operation operation, HandlerMethod handlerMethod) {
         operation.addParametersItem(header(AuthHeaderConstants.ACCESS_TOKEN, "访问令牌"))
                 .addParametersItem(header(AuthHeaderConstants.TIMESTAMP, "时间戳（毫秒）"))
                 .addParametersItem(header(AuthHeaderConstants.NONCE, "一次性随机数"))
-                .addParametersItem(header(AuthHeaderConstants.SIGN, "HMAC-SHA256 签名"));
+                .addParametersItem(header(AuthHeaderConstants.SIGN, "HMAC-SHA256 签名"))
+                .addParametersItem(header(AuthHeaderConstants.AUTHORIZATION, "用户登录令牌"));
         if (handlerMethod.getBeanType() == AuthController.class) {
             operation.addParametersItem(header(AuthHeaderConstants.APP_KEY, "握手凭证（仅握手接口需要）"));
         }

@@ -16,6 +16,11 @@ public final class AuthHeaderConstants {
     public static final String ACCESS_TOKEN = "X-Access-Token";
 
     /**
+     * 用户登录令牌请求头（Sa-Token）。
+     */
+    public static final String AUTHORIZATION = "Authorization";
+
+    /**
      * 请求时间戳请求头。
      */
     public static final String TIMESTAMP = "X-Timestamp";
