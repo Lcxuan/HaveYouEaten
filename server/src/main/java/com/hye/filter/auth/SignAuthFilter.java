@@ -3,6 +3,7 @@ package com.hye.filter.auth;
 import com.hye.common.utils.SignUtils;
 import com.hye.config.AuthProperties;
 import com.hye.enums.auth.AuthHeaderConstants;
+import com.hye.enums.exception.BusinessErrorCodeConstants;
 import com.hye.redis.auth.AuthRedis;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -52,7 +53,7 @@ public class SignAuthFilter extends OncePerRequestFilter {
         // 1. token 有效性：Redis 中存在即有效（过期由 TTL 自动清理）
         String token = resolveToken(request);
         if (token == null) {
-            reject(response, "401", "缺少访问令牌");
+            reject(response, BusinessErrorCodeConstants.DEVICE_TOKEN_INVALID.getCode(), "缺少设备令牌");
             return;
         }
         Boolean tokenExists;
@@ -64,7 +65,8 @@ public class SignAuthFilter extends OncePerRequestFilter {
             return;
         }
         if (!Boolean.TRUE.equals(tokenExists)) {
-            reject(response, "401", "访问令牌无效或已过期");
+            reject(response, BusinessErrorCodeConstants.DEVICE_TOKEN_INVALID.getCode(),
+                    BusinessErrorCodeConstants.DEVICE_TOKEN_INVALID.getMsg());
             return;
         }
 
