@@ -1,14 +1,14 @@
 package com.hye.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.hye.common.mapper.BaseMapperPlus;
 import com.hye.entity.UserDO;
 
 /**
  * 用户 Mapper。
  */
-public interface UserMapper extends BaseMapper<UserDO> {
+public interface UserMapper extends BaseMapperPlus<UserDO> {
 
     /**
      * 按手机号统计数量，用于注册时查重。

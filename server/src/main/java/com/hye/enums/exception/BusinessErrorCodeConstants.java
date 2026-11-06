@@ -17,6 +17,10 @@ public enum BusinessErrorCodeConstants implements ErrorCode {
     USER_NOT_FOUND("1004", "账号不存在"),
     REFRESH_TOKEN_INVALID("1005", "refresh token 无效或已过期"),
 
+    // 菜谱模块
+    RECIPE_NOT_FOUND("1200", "菜谱不存在或已下架"),
+    RECIPE_POOL_EMPTY("1201", "没有符合筛选条件的菜谱，试试放宽筛选"),
+
     // 设备认证模块
     DEVICE_TOKEN_INVALID("1100", "设备令牌无效或已过期");
 
