@@ -159,6 +159,8 @@
         <version>${maven.compiler.plugin.version}</version>
         <configuration>
           <release>${java.version}</release>
+          <!-- 保留方法参数名，Spring MVC 才能从 @PathVariable / @RequestParam 推断参数名 -->
+          <parameters>true</parameters>
           <annotationProcessorPaths>
             <path>
               <groupId>org.projectlombok</groupId>
