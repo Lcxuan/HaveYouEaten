@@ -13,10 +13,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SaTokenConfig implements WebMvcConfigurer {
 
     /**
-     * 登录放行路径：登录、注册、刷新令牌、设备握手。
+     * 登录放行路径：登录、注册、刷新令牌、设备握手、菜系列表。
+     * 菜系列表属于公开参考数据，供未登录时转盘使用。
      */
     private static final String[] LOGIN_EXCLUDE_PATHS = {
-            "/api/user/login", "/api/user/register", "/api/user/refresh", "/api/auth/handshake"
+            "/api/user/login", "/api/user/register", "/api/user/refresh", "/api/auth/handshake",
+            "/api/cuisine/list"
     };
 
     /**
