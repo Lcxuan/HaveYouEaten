@@ -1,0 +1,395 @@
+import 'package:flutter/material.dart';
+
+import 'package:have_you_eaten/api/recipe/recipe_api.dart';
+import 'package:have_you_eaten/api/recipe/response/recipe_detail.dart';
+import 'package:have_you_eaten/styles/app_theme.dart';
+import 'package:have_you_eaten/utils/error_util.dart';
+
+/// 菜谱详情页：封面、基础信息、食材清单与做法步骤。
+class RecipeDetailView extends StatefulWidget {
+  const RecipeDetailView({required this.id, super.key});
+
+  final String id;
+
+  @override
+  State<RecipeDetailView> createState() => _RecipeDetailViewState();
+}
+
+class _RecipeDetailViewState extends State<RecipeDetailView> {
+  RecipeDetail? _detail;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    try {
+      final detail = await RecipeApi.detail(widget.id);
+      if (mounted) setState(() => _detail = detail);
+    } catch (error) {
+      if (mounted) setState(() => _error = friendlyError(error));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = _detail;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(detail?.summary.name ?? '菜谱详情'),
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+      ),
+      body: detail == null
+          ? _buildPlaceholder()
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
+              children: [
+                _Cover(detail: detail),
+                const SizedBox(height: 14),
+                Text(
+                  detail.summary.name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.ink,
+                  ),
+                ),
+                if (detail.summary.description.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    detail.summary.description,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.black54,
+                      height: 1.7,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                _MetaRow(detail: detail),
+                const SizedBox(height: 16),
+                if (detail.ingredients.isNotEmpty)
+                  _Panel(
+                    title: '食材清单',
+                    child: Column(
+                      children: [
+                        for (final item in detail.ingredients)
+                          _IngredientRow(ingredient: item),
+                      ],
+                    ),
+                  ),
+                if (detail.steps.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _Panel(
+                    title: '做法步骤',
+                    child: Column(
+                      children: [
+                        for (final step in detail.steps)
+                          _StepRow(step: step),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _error!,
+              style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton(onPressed: _load, child: const Text('重新加载')),
+          ],
+        ),
+      );
+    }
+    return const Center(child: CircularProgressIndicator());
+  }
+}
+
+/// 顶部封面：无图或加载失败时用底图兜底。
+class _Cover extends StatelessWidget {
+  const _Cover({required this.detail});
+
+  final RecipeDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = detail.summary.imageUrl;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        height: 200,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (url.isEmpty)
+              const _CoverFallback()
+            else
+              Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const _CoverFallback(),
+              ),
+            if (detail.summary.isAiGenerated)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 11,
+                        color: Colors.black45,
+                      ),
+                      SizedBox(width: 3),
+                      Text(
+                        'AI 生成内容',
+                        style: TextStyle(fontSize: 9.5, color: Colors.black45),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CoverFallback extends StatelessWidget {
+  const _CoverFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.paper,
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.rice_bowl_rounded,
+        size: 48,
+        color: AppTheme.persimmon,
+      ),
+    );
+  }
+}
+
+/// 时长 / 难度 / 菜系 三个胶囊。
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.detail});
+
+  final RecipeDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = detail.summary;
+    return Wrap(
+      spacing: 7,
+      runSpacing: 7,
+      children: [
+        if (summary.cookMinutes != null)
+          _MetaChip(
+            icon: Icons.schedule_rounded,
+            text: '${summary.cookMinutes} 分钟',
+          ),
+        if (summary.difficulty != null)
+          _MetaChip(
+            icon: Icons.local_fire_department_rounded,
+            text: _difficultyText(summary.difficulty!),
+          ),
+        if (summary.cuisines.isNotEmpty)
+          _MetaChip(
+            icon: Icons.restaurant_menu_rounded,
+            text: summary.cuisines.join(' · '),
+          ),
+      ],
+    );
+  }
+
+  static String _difficultyText(int difficulty) {
+    return switch (difficulty) {
+      1 => '简单',
+      2 => '中等',
+      3 => '困难',
+      _ => '难度 $difficulty',
+    };
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppTheme.persimmon.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppTheme.persimmon),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFB25B2E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 白底圆角信息面板。
+class _Panel extends StatelessWidget {
+  const _Panel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.ink.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _IngredientRow extends StatelessWidget {
+  const _IngredientRow({required this.ingredient});
+
+  final RecipeIngredient ingredient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFFFF1E2))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              ingredient.name,
+              style: const TextStyle(fontSize: 12.5, color: AppTheme.ink),
+            ),
+          ),
+          Text(
+            ingredient.amount,
+            style: const TextStyle(fontSize: 11.5, color: Colors.black45),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepRow extends StatelessWidget {
+  const _StepRow({required this.step});
+
+  final RecipeStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 18,
+            height: 18,
+            margin: const EdgeInsets.only(top: 2),
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppTheme.persimmon,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '${step.order}',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              step.text,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppTheme.ink,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

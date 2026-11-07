@@ -1,6 +1,9 @@
 {
   "version": "1.0.0",
+  "APP_NAME": "吃了吗？",
   "BASE_URL": "http://127.0.0.1:8080",
+  "API_URL": "/api",
+  "REQUEST_TIMEOUT": "30000",
   "APP_KEY": "填写后端 hye.security.app-key",
   "SIGN_SECRET": "填写后端 hye.security.sign-secret"
 }
