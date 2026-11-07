@@ -28,9 +28,9 @@ public class RecipeDO extends BaseDO {
     private String description;
 
     /**
-     * 菜系（川菜/粤菜/家常菜等）。
+     * 菜系 id（引用 cuisines 表）。
      */
-    private String cuisine;
+    private Long cuisineId;
 
     /**
      * 难度：1-简单，2-中等，3-困难。

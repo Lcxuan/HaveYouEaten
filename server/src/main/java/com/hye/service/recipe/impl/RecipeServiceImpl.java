@@ -16,6 +16,7 @@ import com.hye.enums.exception.BusinessException;
 import com.hye.enums.recipe.RecipeDrawRuleEnum;
 import com.hye.mapper.EatRecordMapper;
 import com.hye.mapper.RecipeMapper;
+import com.hye.service.cuisine.CuisineService;
 import com.hye.service.recipe.RecipeService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,9 @@ public class RecipeServiceImpl implements RecipeService {
     @Resource
     private EatRecordMapper eatRecordMapper;
 
+    @Resource
+    private CuisineService cuisineService;
+
     @Override
     public RecipeDrawVO draw(RecipeDrawDTO dto) {
         List<RecipeDO> pool = filter(recipeMapper.selectEnabled(), dto);
@@ -53,7 +57,11 @@ public class RecipeServiceImpl implements RecipeService {
         // 从候选池中随机抽取一道菜品
         RecipeDO winner = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
         RecipeSummaryVO summary = RecipeConvert.INSTANCE.toSummary(winner);
-        return RecipeDrawVO.builder().poolSize(pool.size()).recipe(summary).build();
+        summary.setCuisine(cuisineService.getCuisineName(winner.getCuisineId()));
+        return RecipeDrawVO.builder()
+                .poolSize(pool.size())
+                .recipe(summary)
+                .build();
     }
 
     @Override
@@ -62,7 +70,9 @@ public class RecipeServiceImpl implements RecipeService {
         if (recipe == null || !CommonStatusEnum.isEnabled(recipe.getEnabled())) {
             throw new BusinessException(BusinessErrorCodeConstants.RECIPE_NOT_FOUND);
         }
-        return RecipeConvert.INSTANCE.toDetail(recipe);
+        RecipeDetailVO detail = RecipeConvert.INSTANCE.toDetail(recipe);
+        detail.setCuisine(cuisineService.getCuisineName(recipe.getCuisineId()));
+        return detail;
     }
 
     /**
@@ -70,8 +80,8 @@ public class RecipeServiceImpl implements RecipeService {
      */
     private List<RecipeDO> filter(List<RecipeDO> pool, RecipeDrawDTO dto) {
         return pool.stream()
-                // 菜系：多选，命中任意一个即可；未选视为不限
-                .filter(r -> CollectionUtils.isEmpty(dto.getCuisines()) || dto.getCuisines().contains(r.getCuisine()))
+                // 菜系：多选，菜谱关联的任一菜系命中即可；未选视为不限
+                .filter(r -> matchCuisines(r, dto.getCuisineIds()))
                 // 口味：与菜谱标签存在交集即命中；未选视为不限
                 .filter(r -> matchTastes(r, dto.getTastes()))
                 // 时长上限：菜谱时长不超过上限；菜谱时长缺失时不参与命中
@@ -80,6 +90,16 @@ public class RecipeServiceImpl implements RecipeService {
                 // 难度：精确匹配；未选视为不限
                 .filter(r -> dto.getDifficulty() == null || dto.getDifficulty().equals(r.getDifficulty()))
                 .toList();
+    }
+
+    /**
+     * 菜系匹配：菜谱的菜系 id 在所选菜系中即命中；未选视为不限。
+     */
+    private boolean matchCuisines(RecipeDO recipe, List<Long> cuisineIds) {
+        if (CollectionUtils.isEmpty(cuisineIds)) {
+            return true;
+        }
+        return recipe.getCuisineId() != null && cuisineIds.contains(recipe.getCuisineId());
     }
 
     /**

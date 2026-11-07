@@ -9,8 +9,8 @@ import java.util.List;
 @Schema(description = "抽签参数")
 public class RecipeDrawDTO {
 
-    @Schema(description = "菜系列表（多选，空为不限）", example = "[\"川菜\", \"家常菜\"]")
-    private List<String> cuisines;
+    @Schema(description = "菜系 id 列表（多选，命中任一即可，空为不限）", example = "[1, 2]")
+    private List<Long> cuisineIds;
 
     @Schema(description = "口味标签（多选，命中任一即可，空为不限）", example = "[\"微辣\", \"下饭\"]")
     private List<String> tastes;

@@ -21,7 +21,10 @@ public class RecipeSummaryVO {
     @Schema(description = "简介")
     private String description;
 
-    @Schema(description = "菜系")
+    @Schema(description = "菜系 id")
+    private Long cuisineId;
+
+    @Schema(description = "菜系名称")
     private String cuisine;
 
     @Schema(description = "难度：1-简单，2-中等，3-困难")
