@@ -1,8 +1,8 @@
 package com.hye.service.record;
 
+import com.hye.common.pojo.PageParam;
 import com.hye.common.pojo.PageResult;
 import com.hye.controller.record.dto.RecordCreateDTO;
-import com.hye.controller.record.dto.RecordListDTO;
 import com.hye.controller.record.vo.RecordVO;
 
 /**
@@ -19,10 +19,10 @@ public interface RecordService {
     Long create(RecordCreateDTO dto);
 
     /**
-     * 分页查询当前用户最近 N 天的记录，按吃饭时间倒序。
+     * 分页查询当前用户的全部记录，按吃饭时间倒序。
      *
-     * @param dto 查询参数：天数、页码、每页条数
+     * @param pageParam 分页参数
      * @return 分页结果
      */
-    PageResult<RecordVO> listRecent(RecordListDTO dto);
+    PageResult<RecordVO> list(PageParam pageParam);
 }

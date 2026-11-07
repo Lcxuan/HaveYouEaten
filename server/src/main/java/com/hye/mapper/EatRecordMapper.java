@@ -15,17 +15,15 @@ import java.util.List;
 public interface EatRecordMapper extends BaseMapperPlus<EatRecordDO> {
 
     /**
-     * 分页查询用户某时间之后的吃饭记录，按吃饭时间倒序，id 兜底保证顺序稳定。
+     * 分页查询用户的吃饭记录，按吃饭时间倒序，id 兜底保证顺序稳定。
      *
      * @param userId    用户 id
-     * @param since     起始时间（含）
      * @param pageParam 分页参数
      * @return 分页结果
      */
-    default PageResult<EatRecordDO> selectRecentPage(Long userId, LocalDateTime since, PageParam pageParam) {
+    default PageResult<EatRecordDO> selectPageByUser(Long userId, PageParam pageParam) {
         return selectPage(pageParam, Wrappers.<EatRecordDO>lambdaQuery()
                 .eq(EatRecordDO::getUserId, userId)
-                .ge(EatRecordDO::getEatenAt, since)
                 .orderByDesc(EatRecordDO::getEatenAt)
                 .orderByDesc(EatRecordDO::getId));
     }

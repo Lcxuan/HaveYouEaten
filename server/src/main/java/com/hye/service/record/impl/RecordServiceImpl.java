@@ -1,11 +1,10 @@
 package com.hye.service.record.impl;
 
+import com.hye.common.pojo.PageParam;
 import com.hye.common.pojo.PageResult;
 import com.hye.common.utils.CollectionUtil;
-import com.hye.common.utils.DateUtils;
 import com.hye.common.utils.LoginContextHolder;
 import com.hye.controller.record.dto.RecordCreateDTO;
-import com.hye.controller.record.dto.RecordListDTO;
 import com.hye.controller.record.vo.RecordVO;
 import com.hye.convert.record.RecordConvert;
 import com.hye.entity.EatRecordDO;
@@ -56,9 +55,8 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
-    public PageResult<RecordVO> listRecent(RecordListDTO dto) {
-        PageResult<EatRecordDO> result = eatRecordMapper.selectRecentPage(
-                LoginContextHolder.getUserId(), DateUtils.nowMinusDays(dto.getDays()), dto);
+    public PageResult<RecordVO> list(PageParam pageParam) {
+        PageResult<EatRecordDO> result = eatRecordMapper.selectPageByUser(LoginContextHolder.getUserId(), pageParam);
         return new PageResult<>(
                 CollectionUtil.convertList(result.getList(), RecordConvert.INSTANCE::toVO),
                 result.getTotal());

@@ -1,9 +1,9 @@
 package com.hye.controller.record;
 
 import com.hye.common.Result;
+import com.hye.common.pojo.PageParam;
 import com.hye.common.pojo.PageResult;
 import com.hye.controller.record.dto.RecordCreateDTO;
-import com.hye.controller.record.dto.RecordListDTO;
 import com.hye.controller.record.vo.RecordVO;
 import com.hye.service.record.RecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,14 +41,14 @@ public class RecordController {
     }
 
     /**
-     * 分页查询当前用户最近 N 天的吃饭记录。
+     * 分页查询当前用户的吃饭记录。
      *
-     * @param dto 查询参数：天数、页码、每页条数
+     * @param pageParam 分页参数：页码、每页条数
      * @return 分页记录，按吃饭时间倒序
      */
     @GetMapping("/list")
     @Operation(summary = "吃过记录列表（分页）")
-    public Result<PageResult<RecordVO>> list(@ParameterObject RecordListDTO dto) {
-        return Result.success(recordService.listRecent(dto));
+    public Result<PageResult<RecordVO>> list(@ParameterObject PageParam pageParam) {
+        return Result.success(recordService.list(pageParam));
     }
 }

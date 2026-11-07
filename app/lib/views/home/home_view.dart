@@ -20,6 +20,9 @@ class HomeView extends ConsumerStatefulWidget {
 class _HomeViewState extends ConsumerState<HomeView> {
   int _index = 0;
 
+  /// 记录页 State，切到该页签时触发刷新，保证首页刚记的一笔能立刻看到。
+  final _recordKey = GlobalKey<RecordViewState>();
+
   static const _destinations = <NavigationDestination>[
     NavigationDestination(
       icon: Icon(Icons.ramen_dining_outlined),
@@ -44,7 +47,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     // 页面按下标创建，IndexedStack 会保留各页 State。
     final pages = <Widget>[
       HomeTab(onOpenSettings: () => setState(() => _index = 3)),
-      const RecordView(),
+      RecordView(key: _recordKey),
       const FavoriteView(),
       const SettingsView(),
     ];
@@ -61,7 +64,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
           backgroundColor: Colors.white,
           indicatorColor: Colors.transparent,
           selectedIndex: _index,
-          onDestinationSelected: (index) => setState(() => _index = index),
+          onDestinationSelected: (index) {
+            setState(() => _index = index);
+            if (index == 1) _recordKey.currentState?.refresh();
+          },
           destinations: _destinations,
         ),
       ),
