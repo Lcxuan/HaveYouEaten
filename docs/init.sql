@@ -54,6 +54,35 @@ COMMENT ON COLUMN cuisines.sort IS '排序值，越小越靠前';
 COMMENT ON COLUMN cuisines.status IS '状态 0-禁用 1-启用';
 COMMENT ON COLUMN cuisines.deleted IS '是否已删除：0-否，1-是';
 
+-- ----------------------------
+-- Records of cuisines
+-- ----------------------------
+BEGIN;
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (1, '家常菜', '[2, 3]', 1, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (2, '川菜', '[2, 3]', 2, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (3, '湘菜', '[2, 3]', 3, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (4, '粤菜', '[2, 3]', 4, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (5, '面食', '[2, 3]', 5, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (6, '面条', '[2, 3]', 6, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (7, '饺子', '[2, 3]', 7, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (8, '炒菜', '[2, 3]', 8, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (9, '汤羹', '[2, 3]', 9, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (10, '硬菜', '[2, 3]', 10, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (11, '快手菜', '[2, 3]', 11, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (12, '日料', '[2, 3]', 12, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (13, '水产', '[2, 3]', 13, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (14, '西餐', '[2, 3]', 14, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (15, '甜品', '[2, 3]', 15, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (16, '蛋类', '[1, 2, 3]', 16, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (17, '烘焙', '[1]', 17, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (18, '三明治', '[1, 2, 3]', 18, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (19, '饼类', '[1, 2, 3]', 19, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (20, '蒸点', '[1, 2, 3]', 20, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (21, '粥类', '[1, 2, 3]', 21, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (22, '粗粮', '[1]', 22, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+INSERT INTO "public"."cuisines" ("id", "name", "meal_periods", "sort", "status", "deleted", "create_by", "update_by", "create_time", "update_time") VALUES (23, '奶麦', '[1]', 23, 1, 0, NULL, NULL, '2026-11-01 00:00:00', '2026-11-01 00:00:00');
+COMMIT;
+
 -- -------------------------------------------------------------
 -- 3. 菜谱表
 -- -------------------------------------------------------------
