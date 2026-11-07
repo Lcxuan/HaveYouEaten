@@ -75,22 +75,29 @@ public class SignAuthFilter extends OncePerRequestFilter {
         String nonce = request.getHeader(AuthHeaderConstants.NONCE);
         String sign = request.getHeader(AuthHeaderConstants.SIGN);
         if (!StringUtils.hasText(timestamp) || !StringUtils.hasText(nonce) || !StringUtils.hasText(sign)) {
-            reject(response, "400", "缺少签名请求头");
+            reject(response, BusinessErrorCodeConstants.SIGN_MISSING.getCode(),
+                    BusinessErrorCodeConstants.SIGN_MISSING.getMsg());
             return;
         }
         if (!SignUtils.isTimestampValid(timestamp, authProperties.getTimestampWindowSeconds())) {
-            reject(response, "401", "请求时间戳超出允许窗口");
+            reject(response, BusinessErrorCodeConstants.TIMESTAMP_INVALID.getCode(),
+                    BusinessErrorCodeConstants.TIMESTAMP_INVALID.getMsg());
             return;
         }
 
         // 3. HMAC 签名比对（常量时间比较）；body 已由 CachedBodyFilter 缓存，可安全读取
-        String body = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        // multipart 上传的原始字节含随机 boundary，客户端无法稳定复现，故仅对非上传请求校验 body 摘要
+        String contentType = request.getContentType();
+        String body = contentType != null && contentType.toLowerCase().startsWith("multipart/")
+                ? ""
+                : new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String stringToSign = SignUtils.buildStringToSign(
                 request.getMethod(), request.getRequestURI(), request.getQueryString(),
                 timestamp, nonce, SignUtils.sha256Hex(body));
         String expected = SignUtils.hmacSha256Hex(authProperties.getSignSecret(), stringToSign);
         if (!SignUtils.safeEquals(expected, sign)) {
-            reject(response, "401", "签名校验失败");
+            reject(response, BusinessErrorCodeConstants.SIGN_INVALID.getCode(),
+                    BusinessErrorCodeConstants.SIGN_INVALID.getMsg());
             return;
         }
 
@@ -105,7 +112,8 @@ public class SignAuthFilter extends OncePerRequestFilter {
             return;
         }
         if (!Boolean.TRUE.equals(firstTime)) {
-            reject(response, "401", "请求已被使用，疑似重放");
+            reject(response, BusinessErrorCodeConstants.NONCE_REPLAY.getCode(),
+                    BusinessErrorCodeConstants.NONCE_REPLAY.getMsg());
             return;
         }
 
