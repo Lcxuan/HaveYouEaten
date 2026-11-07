@@ -144,9 +144,8 @@ class _DrawResultSheetState extends State<_DrawResultSheet> {
               Expanded(
                 child: FilledButton(
                   onPressed: () {
-                    final router = GoRouter.of(context);
-                    Navigator.pop(context);
-                    router.push('/recipe/${recipe.id}');
+                    // 详情页压在结果弹层之上，返回后仍能回到结果卡。
+                    GoRouter.of(context).push('/recipe/${recipe.id}');
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.scallion,
