@@ -7,13 +7,14 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
  * 数据库实体公共字段。
  */
 @Data
-public class BaseDO {
+public class BaseDO implements Serializable {
 
     /**
      * 主键。

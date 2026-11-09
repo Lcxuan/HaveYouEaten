@@ -1,5 +1,6 @@
 package com.hye.enums.exception;
 
+import com.hye.common.enums.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,16 +18,23 @@ public enum BusinessErrorCodeConstants implements ErrorCode {
     USER_NOT_FOUND("1004", "账号不存在"),
     REFRESH_TOKEN_INVALID("1005", "refresh token 无效或已过期"),
 
-    // 菜谱模块
-    RECIPE_NOT_FOUND("1200", "菜谱不存在或已下架"),
-    RECIPE_POOL_EMPTY("1201", "没有符合筛选条件的菜谱，试试放宽筛选"),
-
     // 设备认证模块
     DEVICE_TOKEN_INVALID("1100", "设备令牌无效或已过期"),
     SIGN_MISSING("1101", "缺少签名请求头"),
     TIMESTAMP_INVALID("1102", "请求时间戳超出允许窗口"),
     SIGN_INVALID("1103", "签名校验失败"),
-    NONCE_REPLAY("1104", "请求已被使用，疑似重放");
+    NONCE_REPLAY("1104", "请求已被使用，疑似重放"),
+    
+    // 菜谱模块
+    RECIPE_NOT_FOUND("1200", "菜谱不存在或已下架"),
+    RECIPE_POOL_EMPTY("1201", "没有符合筛选条件的菜谱，试试放宽筛选"),
+
+    // 餐厅模块
+    RESTAURANT_POOL_EMPTY("1301", "附近没有符合条件的餐厅，试试扩大距离或取消筛选"),
+    RESTAURANT_QUERY_FAILED("1302", "附近餐厅获取失败，请稍后重试"),
+    RESTAURANT_CUISINE_EMPTY("1303", "附近没有合适的菜系"),
+    RESTAURANT_NOT_FOUND("1304", "餐厅不存在"),
+    ;
 
     private final String code;
     private final String msg;

@@ -42,3 +42,9 @@ hye:
     token-ttl-seconds: 7200
     # 请求时间戳允许窗口（秒），默认 ±300
     timestamp-window-seconds: 300
+
+# 高德 Web 服务
+amap:
+  key: ${AMAP_KEY:}
+  base-url: ${AMAP_BASE_URL:https://restapi.amap.com}
+  timeout: 3000

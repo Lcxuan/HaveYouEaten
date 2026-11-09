@@ -12,7 +12,7 @@ import com.hye.convert.recipe.RecipeConvert;
 import com.hye.entity.EatRecordDO;
 import com.hye.entity.RecipeDO;
 import com.hye.enums.exception.BusinessErrorCodeConstants;
-import com.hye.enums.exception.BusinessException;
+import com.hye.common.enums.exception.BusinessException;
 import com.hye.enums.recipe.RecipeDrawRuleEnum;
 import com.hye.mapper.EatRecordMapper;
 import com.hye.mapper.RecipeMapper;

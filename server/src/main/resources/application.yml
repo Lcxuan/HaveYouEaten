@@ -3,6 +3,11 @@ spring:
     name: have-you-eaten
   profiles:
     active: my
+  cache:
+    type: redis
+    redis:
+      key-prefix: "${hye.name}:"
+      time-to-live: 5m
 
 swagger:
   info:

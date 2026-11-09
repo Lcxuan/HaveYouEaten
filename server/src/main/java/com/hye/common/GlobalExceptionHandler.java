@@ -1,8 +1,8 @@
 package com.hye.common;
 
 import cn.dev33.satoken.exception.NotLoginException;
-import com.hye.enums.exception.BusinessException;
-import com.hye.enums.exception.GlobalErrorCodeConstants;
+import com.hye.common.enums.exception.BusinessException;
+import com.hye.common.enums.exception.GlobalErrorCodeConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;

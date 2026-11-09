@@ -12,7 +12,7 @@ import com.hye.controller.user.vo.UserLoginVO;
 import com.hye.convert.user.UserConvert;
 import com.hye.entity.UserDO;
 import com.hye.enums.exception.BusinessErrorCodeConstants;
-import com.hye.enums.exception.BusinessException;
+import com.hye.common.enums.exception.BusinessException;
 import com.hye.mapper.UserMapper;
 import com.hye.redis.auth.AuthRedis;
 import com.hye.service.user.UserService;

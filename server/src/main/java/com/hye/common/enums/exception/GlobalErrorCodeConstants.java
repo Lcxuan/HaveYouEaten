@@ -1,4 +1,4 @@
-package com.hye.enums.exception;
+package com.hye.common.enums.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

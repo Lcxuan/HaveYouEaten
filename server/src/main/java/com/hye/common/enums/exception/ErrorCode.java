@@ -1,4 +1,4 @@
-package com.hye.enums.exception;
+package com.hye.common.enums.exception;
 
 public interface ErrorCode {
     String getCode();

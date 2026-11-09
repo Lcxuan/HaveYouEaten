@@ -1,6 +1,6 @@
 package com.hye.common;
 
-import com.hye.enums.exception.GlobalErrorCodeConstants;
+import com.hye.common.enums.exception.GlobalErrorCodeConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;

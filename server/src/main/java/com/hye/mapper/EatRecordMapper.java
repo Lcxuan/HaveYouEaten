@@ -42,4 +42,19 @@ public interface EatRecordMapper extends BaseMapperPlus<EatRecordDO> {
                 .ge(EatRecordDO::getEatenAt, since)
                 .isNotNull(EatRecordDO::getRecipeId));
     }
+
+    /**
+     * 查询用户某时间之后吃过（出去吃）的记录，仅取 POI id 字段，用于发牌排序。
+     *
+     * @param userId 用户 id
+     * @param since  起始时间（含）
+     * @return 记录列表（poiId 非空）
+     */
+    default List<EatRecordDO> selectRecentPoiRecords(Long userId, LocalDateTime since) {
+        return selectList(Wrappers.<EatRecordDO>lambdaQuery()
+                .select(EatRecordDO::getPoiId)
+                .eq(EatRecordDO::getUserId, userId)
+                .ge(EatRecordDO::getEatenAt, since)
+                .isNotNull(EatRecordDO::getPoiId));
+    }
 }

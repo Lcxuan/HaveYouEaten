@@ -1,7 +1,7 @@
 package com.hye.common;
 
-import com.hye.enums.exception.ErrorCode;
-import com.hye.enums.exception.GlobalErrorCodeConstants;
+import com.hye.common.enums.exception.ErrorCode;
+import com.hye.common.enums.exception.GlobalErrorCodeConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
