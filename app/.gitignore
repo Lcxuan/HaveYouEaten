@@ -45,4 +45,4 @@ app.*.map.json
 /android/app/release
 
 # 生产环境凭证不入库（模板见 config/config.example.json）
-config/config_prod.json
+config/config.json

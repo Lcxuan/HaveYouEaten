@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 自用版后端跑本机走 HTTP，需允许明文流量；上架前改为 HTTPS 后移除 -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 附近餐厅定位：Android 12+ 用户可能只授予「大致位置」，取坐标时需校验精度 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="吃了吗"
         android:name="${applicationName}"

@@ -13,6 +13,7 @@ import 'package:have_you_eaten/config/api_config.dart';
 import 'package:have_you_eaten/store/auth_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
 import 'package:have_you_eaten/utils/error_util.dart';
+import 'package:have_you_eaten/views/home/tabs/dine_out_tab.dart';
 import 'package:have_you_eaten/views/home/widgets/draw_filter_sheet.dart';
 import 'package:have_you_eaten/views/home/widgets/draw_result_sheet.dart';
 
@@ -346,7 +347,7 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
             ),
             if (_mode == _MealMode.out) ...[
               const SizedBox(height: 12),
-              const Expanded(child: _ComingSoon()),
+              const Expanded(child: DineOutTab()),
             ] else ...[
               const SizedBox(height: 12),
               Wrap(
@@ -428,42 +429,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// 出去吃还未接入餐厅数据，先占位提示。
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.storefront_rounded,
-            size: 64,
-            color: AppTheme.persimmon.withValues(alpha: 0.35),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            '开发中',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.ink,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            '附近餐厅推荐正在路上，先回「在家吃」抽一道吧',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.black38),
-          ),
-        ],
       ),
     );
   }

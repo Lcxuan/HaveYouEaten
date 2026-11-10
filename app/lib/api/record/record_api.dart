@@ -17,6 +17,17 @@ class RecordApi {
     );
   }
 
+  /// 记一笔：出去吃选好店后写入记录。
+  static Future<void> createPoi({
+    required String poiId,
+    required String poiName,
+  }) async {
+    await Request.post<void>(
+      '/record',
+      data: {'poiId': poiId, 'poiName': poiName, 'source': 'poi'},
+    );
+  }
+
   /// 分页查询全部记录，按吃饭时间倒序。
   static Future<RecordPage> list({int pageNo = 1, int pageSize = 20}) async {
     final data = await Request.get<Map<String, dynamic>>(

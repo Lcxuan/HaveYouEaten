@@ -33,6 +33,7 @@ class RecordItem {
   /// 来源展示文案。
   String get sourceLabel => switch (source) {
     'roulette' => '抽签',
+    'poi' => '出去吃',
     'manual' => '手动',
     'ai_recommend' => 'AI 推荐',
     _ => '记录',
