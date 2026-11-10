@@ -9,6 +9,7 @@ import 'package:have_you_eaten/api/recipe/recipe_api.dart';
 import 'package:have_you_eaten/api/recipe/response/recipe_draw_result.dart';
 import 'package:have_you_eaten/api/record/record_api.dart';
 import 'package:have_you_eaten/components/food_wheel.dart';
+import 'package:have_you_eaten/components/shake_detector.dart';
 import 'package:have_you_eaten/config/api_config.dart';
 import 'package:have_you_eaten/store/auth_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
@@ -35,10 +36,13 @@ enum _MealPeriod {
 
 /// 首页页签：日期问候、模式切换、快捷筛选与菜品抽签转盘
 class HomeTab extends ConsumerStatefulWidget {
-  const HomeTab({super.key, this.onOpenSettings});
+  const HomeTab({super.key, this.onOpenSettings, this.isActive = true});
 
   /// 右上角齿轮
   final VoidCallback? onOpenSettings;
+
+  /// 当前页签是否可见；底部切到其他页签时关闭摇一摇。
+  final bool isActive;
 
   @override
   ConsumerState<HomeTab> createState() => _HomeTabState();
@@ -46,7 +50,16 @@ class HomeTab extends ConsumerStatefulWidget {
 
 class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   static const _maxWheelSectors = 8;
-  static const _defaultWheelLabels = ['家常菜', '川菜', '湘菜', '粤菜', '面食', '汤羹', '硬菜', '快手菜'];
+  static const _defaultWheelLabels = [
+    '家常菜',
+    '川菜',
+    '湘菜',
+    '粤菜',
+    '面食',
+    '汤羹',
+    '硬菜',
+    '快手菜',
+  ];
 
   final _wheelKey = GlobalKey<FoodWheelState>();
   DrawFilters _filters = const DrawFilters();
@@ -65,6 +78,9 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   List<Cuisine> _wheelCuisines = const [];
   _MealMode _mode = _MealMode.home;
   bool _drawing = false;
+
+  /// 筛选或结果弹层是否打开；弹层期间摇一摇不触发。
+  bool _sheetVisible = false;
 
   /// 定时检查餐段，跨时段后自动刷新轮盘菜系。
   Timer? _periodTimer;
@@ -148,14 +164,15 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   /// 可用菜系不超过 8 个时全部展示；超过 8 个时随机抽 8 个，再按 sort 升序排列。
   List<Cuisine> _pickWheelCuisines() {
     final period = _currentPeriod.code;
-    final visible = _cuisines
-        .where(
-          (cuisine) =>
-              cuisine.mealPeriods.isEmpty ||
-              cuisine.mealPeriods.contains(period),
-        )
-        .toList()
-      ..sort((a, b) => a.sort.compareTo(b.sort));
+    final visible =
+        _cuisines
+            .where(
+              (cuisine) =>
+                  cuisine.mealPeriods.isEmpty ||
+                  cuisine.mealPeriods.contains(period),
+            )
+            .toList()
+          ..sort((a, b) => a.sort.compareTo(b.sort));
     if (visible.isEmpty) {
       return const [];
     }
@@ -231,12 +248,14 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   }
 
   Future<void> _showResult(RecipeDrawResult result) async {
+    _sheetVisible = true;
     final again = await showDrawResultSheet(
       context,
       result: result,
       loggedIn: ref.read(authProvider).loggedIn,
       onRecord: () => _record(result.recipe.id),
     );
+    _sheetVisible = false;
     if (!mounted) return;
     // 弹层关闭后再重新抽样，避免用户看到扇区在结果页背后变化。
     _rebuildWheel();
@@ -255,7 +274,9 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   }
 
   Future<void> _openFilters() async {
+    _sheetVisible = true;
     final result = await showDrawFilterSheet(context, _filters);
+    _sheetVisible = false;
     if (result != null && mounted) setState(() => _filters = result);
   }
 
@@ -274,160 +295,172 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final wheelSize =
-        (MediaQuery.sizeOf(context).width - 56).clamp(220.0, 300.0).toDouble();
+    final wheelSize = (MediaQuery.sizeOf(context).width - 56)
+        .clamp(220.0, 300.0)
+        .toDouble();
     final accent = _mode == _MealMode.out
         ? AppTheme.persimmon
         : AppTheme.scallion;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.persimmon,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Icon(
-                    Icons.restaurant_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _drawing ? '手气决定！' : ApiConfig.appName,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.ink,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _drawing ? '正在为你抽签…' : _dateLine,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.black38,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: widget.onOpenSettings,
-                  icon: const Icon(Icons.settings_outlined),
-                  color: AppTheme.ink,
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _ModeSwitch(
-              mode: _mode,
-              onChanged: (mode) {
-                if (_drawing) return;
-                setState(() => _mode = mode);
-              },
-            ),
-            if (_mode == _MealMode.out) ...[
-              const SizedBox(height: 12),
-              const Expanded(child: DineOutTab()),
-            ] else ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+    return ShakeDetector(
+      enabled:
+          widget.isActive &&
+          _mode == _MealMode.home &&
+          !_drawing &&
+          !_sheetVisible,
+      onShake: _draw,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _QuickChip(
-                    label: '微辣',
-                    selected: _filters.tastes.contains('微辣'),
-                    onTap: _drawing
-                        ? null
-                        : () => setState(
-                            () => _filters = _filters.toggleTaste('微辣'),
-                          ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.persimmon,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.restaurant_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
-                  _QuickChip(
-                    label: '30 分钟内',
-                    selected: _filters.maxCookMinutes == 30,
-                    onTap: _drawing
-                        ? null
-                        : () => setState(
-                            () => _filters = _filters.withMaxCookMinutes(
-                              _filters.maxCookMinutes == 30 ? null : 30,
-                            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _drawing ? '手气决定！' : ApiConfig.appName,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.ink,
+                            letterSpacing: 0.3,
                           ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _drawing ? '正在为你抽签…' : _dateLine,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.black38,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _QuickChip(
-                    label: '简单',
-                    selected: _filters.difficulty == 1,
-                    onTap: _drawing
-                        ? null
-                        : () => setState(
-                            () => _filters = _filters.withDifficulty(
-                              _filters.difficulty == 1 ? null : 1,
-                            ),
-                          ),
+                  IconButton(
+                    onPressed: widget.onOpenSettings,
+                    icon: const Icon(Icons.settings_outlined),
+                    color: AppTheme.ink,
+                    iconSize: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _QuickChip(
-                  label: '筛选',
-                  icon: Icons.keyboard_arrow_down_rounded,
-                  selected: false,
-                  neutral: true,
-                  onTap: _drawing ? null : _openFilters,
-                ),
+              const SizedBox(height: 12),
+              _ModeSwitch(
+                mode: _mode,
+                onChanged: (mode) {
+                  if (_drawing) return;
+                  setState(() => _mode = mode);
+                },
               ),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FoodWheel(
-                        key: _wheelKey,
-                        onTap: _draw,
-                        size: wheelSize,
-                        accent: accent,
-                        labels: _wheelLabels,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _drawing
-                            ? '正在从候选池里抽…'
-                            : _filters.activeCount > 0
-                            ? '已按偏好过滤候选池 · 摇一摇也能开抽'
-                            : 'shake 摇一摇手机也可以开抽',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.black38,
-                        ),
-                      ),
-                    ],
+              if (_mode == _MealMode.out) ...[
+                const SizedBox(height: 12),
+                const Expanded(child: DineOutTab()),
+              ] else ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _QuickChip(
+                      label: '微辣',
+                      selected: _filters.tastes.contains('微辣'),
+                      onTap: _drawing
+                          ? null
+                          : () => setState(
+                              () => _filters = _filters.toggleTaste('微辣'),
+                            ),
+                    ),
+                    _QuickChip(
+                      label: '30 分钟内',
+                      selected: _filters.maxCookMinutes == 30,
+                      onTap: _drawing
+                          ? null
+                          : () => setState(
+                              () => _filters = _filters.withMaxCookMinutes(
+                                _filters.maxCookMinutes == 30 ? null : 30,
+                              ),
+                            ),
+                    ),
+                    _QuickChip(
+                      label: '简单',
+                      selected: _filters.difficulty == 1,
+                      onTap: _drawing
+                          ? null
+                          : () => setState(
+                              () => _filters = _filters.withDifficulty(
+                                _filters.difficulty == 1 ? null : 1,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _QuickChip(
+                    label: '筛选',
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    selected: false,
+                    neutral: true,
+                    onTap: _drawing ? null : _openFilters,
                   ),
                 ),
-              ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FoodWheel(
+                          key: _wheelKey,
+                          onTap: _draw,
+                          size: wheelSize,
+                          accent: accent,
+                          labels: _wheelLabels,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _drawing
+                              ? '正在从候选池里抽…'
+                              : _filters.activeCount > 0
+                              ? '已按偏好过滤候选池 · 摇一摇也能开抽'
+                              : 'shake 摇一摇手机也可以开抽',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Colors.black38,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -580,9 +613,7 @@ class _QuickChip extends StatelessWidget {
                 color: accent,
               ),
             ),
-            if (icon != null) ...[
-              Icon(icon, size: 15, color: accent),
-            ],
+            if (icon != null) ...[Icon(icon, size: 15, color: accent)],
           ],
         ),
       ),

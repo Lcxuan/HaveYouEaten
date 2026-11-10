@@ -24,29 +24,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
   final _recordKey = GlobalKey<RecordViewState>();
 
   static const _destinations = <NavigationDestination>[
-    NavigationDestination(
-      icon: Icon(Icons.ramen_dining_outlined),
-      label: '首页',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.menu_book_outlined),
-      label: '记录',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.star_outline_rounded),
-      label: '收藏',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      label: '设置',
-    ),
+    NavigationDestination(icon: Icon(Icons.ramen_dining_outlined), label: '首页'),
+    NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: '记录'),
+    NavigationDestination(icon: Icon(Icons.star_outline_rounded), label: '收藏'),
+    NavigationDestination(icon: Icon(Icons.settings_outlined), label: '设置'),
   ];
 
   @override
   Widget build(BuildContext context) {
     // 页面按下标创建，IndexedStack 会保留各页 State。
     final pages = <Widget>[
-      HomeTab(onOpenSettings: () => setState(() => _index = 3)),
+      HomeTab(
+        isActive: _index == 0,
+        onOpenSettings: () => setState(() => _index = 3),
+      ),
       RecordView(key: _recordKey),
       const FavoriteView(),
       const SettingsView(),
