@@ -16,11 +16,13 @@ import com.hye.convert.restaurant.DineCuisineConvert;
 import com.hye.convert.restaurant.RestaurantConvert;
 import com.hye.entity.DineCuisineDO;
 import com.hye.entity.EatRecordDO;
+import com.hye.enums.blacklist.BlacklistScopeEnum;
 import com.hye.enums.exception.BusinessErrorCodeConstants;
 import com.hye.enums.restaurant.RestaurantDrawRuleEnum;
 import com.hye.common.enums.exception.BusinessException;
 import com.hye.mapper.EatRecordMapper;
 import com.hye.redis.restaurant.RestaurantRedis;
+import com.hye.service.blacklist.BlacklistService;
 import com.hye.service.restaurant.DineCuisineService;
 import com.hye.service.restaurant.RestaurantService;
 import jakarta.annotation.Resource;
@@ -59,6 +61,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     private DineCuisineService dineCuisineService;
 
     @Resource
+    private BlacklistService blacklistService;
+
+    @Resource
     private EatRecordMapper eatRecordMapper;
 
     @Override
@@ -68,8 +73,11 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public RestaurantDeckVO deck(RestaurantDeckDTO dto) {
-        // 1. 随机抽一个菜系
-        DineCuisineDO cuisine = pickCuisine(dto);
+        Long userId = LoginContextHolder.getUserId();
+        // 1. 先取黑名单，再随机抽一个菜系（拉黑的菜系不参与抽取）
+        Set<String> blockedCuisines = blacklistService.getBlockedValues(
+                userId, BlacklistScopeEnum.CUISINE.getCode());
+        DineCuisineDO cuisine = pickCuisine(dto, blockedCuisines);
         // 2. 按菜系获取附近餐厅：大类码 + 餐饮全集 + 菜系关键词
         String types = StringUtils.hasText(cuisine.getBigType())
                 ? cuisine.getBigType() + "|" + TYPES_RESTAURANT
@@ -78,18 +86,30 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         // 3. 按人均预算过滤；未设上限或店铺未提供人均时保留
         Integer maxCost = dto.getMaxCost();
-        List<AmapApiPoiVO> options = pois.stream()
+        List<AmapApiPoiVO> costFiltered = pois.stream()
                 .filter(poi -> maxCost == null || poi.getCost() == null || poi.getCost() <= maxCost)
                 .toList();
-        if (options.isEmpty()) {
+        if (costFiltered.isEmpty()) {
             throw new BusinessException(BusinessErrorCodeConstants.RESTAURANT_POOL_EMPTY);
         }
 
-        // 4. 随机打乱，并把最近吃过的店稳定排到队尾，避免每次都是距离最近的那几家
+        // 4. 剔除用户拉黑的餐厅
+        Set<String> blockedPois = blacklistService.getBlockedValues(
+                userId, BlacklistScopeEnum.POI.getCode());
+        List<AmapApiPoiVO> options = blockedPois.isEmpty()
+                ? costFiltered
+                : costFiltered.stream()
+                        .filter(poi -> !blockedPois.contains(poi.getPoiId()))
+                        .toList();
+        if (options.isEmpty()) {
+            throw new BusinessException(BusinessErrorCodeConstants.RESTAURANT_POOL_BLACKLIST_EMPTY);
+        }
+
+        // 5. 随机打乱，并把最近吃过的店稳定排到队尾，避免每次都是距离最近的那几家
         List<AmapApiPoiVO> sorted = new ArrayList<>(options);
         sortByRecommendation(sorted);
 
-        // 5. 组装发牌结果：菜系 + 候选池大小 + 排好序的卡片
+        // 6. 组装发牌结果：菜系 + 候选池大小 + 排好序的卡片
         return RestaurantDeckVO.builder()
                 .cuisine(RestaurantCuisineVO.builder()
                         .id(cuisine.getId())
@@ -114,10 +134,8 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     /**
      * 抽取一个菜系
-     * 1、优先在用户选择的池子里抽
-     * 2、未选则从全部启用菜系里抽，再排除刚抽过的
      */
-    private DineCuisineDO pickCuisine(RestaurantDeckDTO dto) {
+    private DineCuisineDO pickCuisine(RestaurantDeckDTO dto, Set<String> blockedCuisines) {
         // 1. 取全部启用菜系（该查询带 5 分钟缓存，不会每次发牌都打库）
         List<DineCuisineDO> enabled = dineCuisineService.getEnabledList();
         if (CollectionUtils.isEmpty(enabled)) {
@@ -135,18 +153,28 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new BusinessException(BusinessErrorCodeConstants.RESTAURANT_CUISINE_EMPTY);
         }
 
-        // 3. 再排除「换菜系」时刚抽过的，避免连续两次抽到同一个
+        // 3. 排除用户拉黑的菜系
+        if (!blockedCuisines.isEmpty()) {
+            candidates = candidates.stream()
+                    .filter(cuisine -> !blockedCuisines.contains(cuisine.getName()))
+                    .toList();
+            if (candidates.isEmpty()) {
+                throw new BusinessException(BusinessErrorCodeConstants.RESTAURANT_CUISINE_BLACKLIST_EMPTY);
+            }
+        }
+
+        // 4. 再排除「换菜系」时刚抽过的，避免连续两次抽到同一个
         Set<Long> excluded = dto.getExcludeCuisineIds() == null
                 ? Set.of()
                 : new HashSet<>(dto.getExcludeCuisineIds());
         List<DineCuisineDO> filtered = candidates.stream()
                 .filter(cuisine -> !excluded.contains(cuisine.getId()))
                 .toList();
-        // 4. 若排除后没有候选，清空排除重来一次，避免「换菜系」把自己卡死
+        // 5. 若排除后没有候选，清空排除重来一次，避免「换菜系」把自己卡死
         if (filtered.isEmpty()) {
             filtered = candidates;
         }
-        // 5. 在最终候选里随机抽一个
+        // 6. 在最终候选里随机抽一个
         return filtered.get(ThreadLocalRandom.current().nextInt(filtered.size()));
     }
 
@@ -205,7 +233,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 userId, DateUtils.nowMinusDays(RestaurantDrawRuleEnum.RECENT_DAYS.getDays()));
         Set<String> recent = CollectionUtil.convertSet(recentRecords, EatRecordDO::getPoiId);
         Collections.shuffle(pois);
-        // List.sort 是稳定排序，会保留上一步的随机顺序，只把吃过的挪到末尾
+        // 保留上一步的随机顺序，只把吃过的挪到末尾
         pois.sort(Comparator.comparing((AmapApiPoiVO poi) -> recent.contains(poi.getPoiId())));
     }
 }

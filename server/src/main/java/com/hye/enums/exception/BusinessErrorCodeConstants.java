@@ -28,12 +28,15 @@ public enum BusinessErrorCodeConstants implements ErrorCode {
     // 菜谱模块
     RECIPE_NOT_FOUND("1200", "菜谱不存在或已下架"),
     RECIPE_POOL_EMPTY("1201", "没有符合筛选条件的菜谱，试试放宽筛选"),
+    RECIPE_POOL_BLACKLIST_EMPTY("1202", "候选菜谱都被你拉黑了，去设置里调整一下"),
 
     // 餐厅模块
     RESTAURANT_POOL_EMPTY("1301", "附近没有符合条件的餐厅，试试扩大距离或取消筛选"),
     RESTAURANT_QUERY_FAILED("1302", "附近餐厅获取失败，请稍后重试"),
     RESTAURANT_CUISINE_EMPTY("1303", "附近没有合适的菜系"),
     RESTAURANT_NOT_FOUND("1304", "餐厅不存在"),
+    RESTAURANT_POOL_BLACKLIST_EMPTY("1305", "附近餐厅都被你拉黑了，去设置里调整一下"),
+    RESTAURANT_CUISINE_BLACKLIST_EMPTY("1306", "可选菜系都被你拉黑了，去设置里调整一下"),
     ;
 
     private final String code;

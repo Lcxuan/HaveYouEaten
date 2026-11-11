@@ -3,6 +3,8 @@ package com.hye.common;
 import cn.dev33.satoken.exception.NotLoginException;
 import com.hye.common.enums.exception.BusinessException;
 import com.hye.common.enums.exception.GlobalErrorCodeConstants;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -51,6 +53,19 @@ public class GlobalExceptionHandler {
         String message = fieldError == null
                 ? GlobalErrorCodeConstants.BAD_REQUEST.getMsg()
                 : fieldError.getDefaultMessage();
+        return Result.error(GlobalErrorCodeConstants.BAD_REQUEST.getCode(), message);
+    }
+
+    /**
+     * 处理方法参数上的校验失败（如 @RequestParam 上的 @Pattern）。
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Void> handleConstraintViolationException(ConstraintViolationException exception) {
+        log.warn("请求参数校验失败：{}", exception.getMessage());
+        String message = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(ConstraintViolation::getMessage)
+                .orElse(GlobalErrorCodeConstants.BAD_REQUEST.getMsg());
         return Result.error(GlobalErrorCodeConstants.BAD_REQUEST.getCode(), message);
     }
 

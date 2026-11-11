@@ -4,6 +4,7 @@ import com.hye.common.enums.CommonStatusEnum;
 import com.hye.common.utils.CollectionUtil;
 import com.hye.common.utils.DateUtils;
 import com.hye.common.utils.LoginContextHolder;
+import com.hye.controller.cuisine.vo.CuisineVO;
 import com.hye.controller.recipe.dto.RecipeDrawDTO;
 import com.hye.controller.recipe.vo.RecipeDetailVO;
 import com.hye.controller.recipe.vo.RecipeDrawVO;
@@ -11,17 +12,20 @@ import com.hye.controller.recipe.vo.RecipeSummaryVO;
 import com.hye.convert.recipe.RecipeConvert;
 import com.hye.entity.EatRecordDO;
 import com.hye.entity.RecipeDO;
+import com.hye.enums.blacklist.BlacklistScopeEnum;
 import com.hye.enums.exception.BusinessErrorCodeConstants;
 import com.hye.common.enums.exception.BusinessException;
 import com.hye.enums.recipe.RecipeDrawRuleEnum;
 import com.hye.mapper.EatRecordMapper;
 import com.hye.mapper.RecipeMapper;
+import com.hye.service.blacklist.BlacklistService;
 import com.hye.service.cuisine.CuisineService;
 import com.hye.service.recipe.RecipeService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -41,6 +45,9 @@ public class RecipeServiceImpl implements RecipeService {
     @Resource
     private CuisineService cuisineService;
 
+    @Resource
+    private BlacklistService blacklistService;
+
     @Override
     public RecipeDrawVO draw(RecipeDrawDTO dto) {
         List<RecipeDO> pool = filter(recipeMapper.selectEnabled(), dto);
@@ -53,6 +60,11 @@ public class RecipeServiceImpl implements RecipeService {
         pool = CollectionUtil.filterList(pool, r -> !recentIds.contains(r.getId()));
         if (pool.isEmpty()) {
             throw new BusinessException(BusinessErrorCodeConstants.RECIPE_POOL_EMPTY);
+        }
+        // 过滤黑名单：菜谱按 id，菜系按名称映射成 id
+        pool = filterBlacklist(pool, LoginContextHolder.getUserId());
+        if (pool.isEmpty()) {
+            throw new BusinessException(BusinessErrorCodeConstants.RECIPE_POOL_BLACKLIST_EMPTY);
         }
         // 从候选池中随机抽取一道菜品
         RecipeDO winner = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
@@ -73,6 +85,30 @@ public class RecipeServiceImpl implements RecipeService {
         RecipeDetailVO detail = RecipeConvert.INSTANCE.toDetail(recipe);
         detail.setCuisine(cuisineService.getCuisineName(recipe.getCuisineId()));
         return detail;
+    }
+
+    /**
+     * 过滤黑名单：菜谱维度按 id 排除，菜系维度把菜系名映射成 id 后排除。
+     */
+    private List<RecipeDO> filterBlacklist(List<RecipeDO> pool, Long userId) {
+        Set<String> blockedRecipes = blacklistService.getBlockedValues(
+                userId, BlacklistScopeEnum.RECIPE.getCode());
+        Set<String> blockedCuisines = blacklistService.getBlockedValues(
+                userId, BlacklistScopeEnum.CUISINE.getCode());
+        if (blockedRecipes.isEmpty() && blockedCuisines.isEmpty()) {
+            return pool;
+        }
+        Set<Long> blockedCuisineIds = new HashSet<>();
+        if (!blockedCuisines.isEmpty()) {
+            for (CuisineVO cuisine : cuisineService.getEnabledList()) {
+                if (blockedCuisines.contains(cuisine.getName())) {
+                    blockedCuisineIds.add(cuisine.getId());
+                }
+            }
+        }
+        return CollectionUtil.filterList(pool, recipe ->
+                !blockedRecipes.contains(String.valueOf(recipe.getId()))
+                        && !blockedCuisineIds.contains(recipe.getCuisineId()));
     }
 
     /**
