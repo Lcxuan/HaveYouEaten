@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:have_you_eaten/api/blacklist/blacklist_api.dart';
+import 'package:have_you_eaten/api/favorite/favorite_api.dart';
 import 'package:have_you_eaten/api/recipe/recipe_api.dart';
 import 'package:have_you_eaten/api/recipe/response/recipe_detail.dart';
+import 'package:have_you_eaten/store/auth_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
 import 'package:have_you_eaten/utils/error_util.dart';
 
 /// 菜谱详情页：封面、基础信息、食材清单与做法步骤。
-class RecipeDetailView extends StatefulWidget {
+class RecipeDetailView extends ConsumerStatefulWidget {
   const RecipeDetailView({required this.id, super.key});
 
   final String id;
 
   @override
-  State<RecipeDetailView> createState() => _RecipeDetailViewState();
+  ConsumerState<RecipeDetailView> createState() => _RecipeDetailViewState();
 }
 
-class _RecipeDetailViewState extends State<RecipeDetailView> {
+class _RecipeDetailViewState extends ConsumerState<RecipeDetailView> {
   RecipeDetail? _detail;
   String? _error;
+  bool _favorited = false;
+  bool _favoriteBusy = false;
 
   @override
   void initState() {
@@ -29,10 +35,100 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
     setState(() => _error = null);
     try {
       final detail = await RecipeApi.detail(widget.id);
-      if (mounted) setState(() => _detail = detail);
+      if (!mounted) return;
+      setState(() => _detail = detail);
+      await _loadFavoriteStatus();
     } catch (error) {
       if (mounted) setState(() => _error = friendlyError(error));
     }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    if (!ref.read(authProvider).loggedIn) return;
+    try {
+      final favorited = await FavoriteApi.status(
+        targetType: 'recipe',
+        targetId: widget.id,
+      );
+      if (mounted) setState(() => _favorited = favorited);
+    } catch (error) {
+      debugPrint('加载收藏状态失败：$error');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteBusy) return;
+    if (!ref.read(authProvider).loggedIn) {
+      _showMessage('请先在底部「设置」页登录后再收藏');
+      return;
+    }
+    final detail = _detail;
+    if (detail == null) return;
+
+    setState(() => _favoriteBusy = true);
+    try {
+      if (_favorited) {
+        await FavoriteApi.remove(targetType: 'recipe', targetId: widget.id);
+      } else {
+        await FavoriteApi.add(
+          targetType: 'recipe',
+          targetId: widget.id,
+          name: detail.summary.name,
+        );
+      }
+      if (!mounted) return;
+      setState(() => _favorited = !_favorited);
+      _showMessage(_favorited ? '已收藏' : '已取消收藏');
+    } catch (error) {
+      if (mounted) _showMessage(friendlyError(error));
+    } finally {
+      if (mounted) setState(() => _favoriteBusy = false);
+    }
+  }
+
+  Future<void> _blacklistRecipe() async {
+    final detail = _detail;
+    if (detail == null) return;
+    if (!ref.read(authProvider).loggedIn) {
+      _showMessage('请先在底部「设置」页登录后再操作');
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('不再推荐'),
+        content: Text('确定不再推荐「${detail.summary.name}」吗？之后抽签不会抽到它。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.chili),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await BlacklistApi.add(
+        scope: 'recipe',
+        targetValue: widget.id,
+        remark: detail.summary.name,
+      );
+      if (mounted) _showMessage('已加入黑名单，之后不会再抽到这道菜');
+    } catch (error) {
+      if (mounted) _showMessage(friendlyError(error));
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -45,6 +141,35 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
+        actions: [
+          IconButton(
+            onPressed: detail == null ? null : _toggleFavorite,
+            tooltip: _favorited ? '取消收藏' : '收藏',
+            icon: Icon(
+              _favorited ? Icons.star_rounded : Icons.star_outline_rounded,
+              color: _favorited ? AppTheme.yolk : null,
+            ),
+          ),
+          PopupMenuButton<String>(
+            enabled: detail != null,
+            tooltip: '更多',
+            onSelected: (value) {
+              if (value == 'blacklist') _blacklistRecipe();
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'blacklist',
+                child: Row(
+                  children: [
+                    Icon(Icons.block_rounded, size: 18),
+                    SizedBox(width: 8),
+                    Text('不再推荐这道菜'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: detail == null
           ? _buildPlaceholder()

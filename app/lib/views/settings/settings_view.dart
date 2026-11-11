@@ -43,8 +43,8 @@ class SettingsView extends ConsumerWidget {
               _SettingRow(
                 icon: Icons.block_rounded,
                 label: '黑名单管理',
-                value: '0 项',
-                onTap: () => _comingSoon(context),
+                value: '管理',
+                onTap: () => context.push('/settings/blacklist'),
               ),
             ],
           ),

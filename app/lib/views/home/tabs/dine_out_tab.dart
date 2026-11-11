@@ -302,9 +302,31 @@ class _DineOutTabState extends ConsumerState<DineOutTab>
       restaurant: restaurant,
       loggedIn: ref.read(authProvider).loggedIn,
       onRecord: () => _record(restaurant),
+      onBlock: () => _blockRestaurant(restaurant),
     );
     if (!mounted || !again) return;
     await _next();
+  }
+
+  /// 拉黑当前餐厅：服务端已写入黑名单，这里同步把卡片从牌堆移除。
+  Future<void> _blockRestaurant(Restaurant restaurant) async {
+    final deck = _deck;
+    if (deck == null) return;
+    deck.options.removeWhere((item) => item.poiId == restaurant.poiId);
+    if (!mounted) return;
+    if (deck.options.isEmpty) {
+      setState(() {
+        _deck = null;
+        _index = 0;
+        _stage = _DineOutStage.idle;
+        _error = '这个菜系附近都被你拉黑了，换个菜系试试';
+      });
+    } else {
+      setState(() {
+        if (_index >= deck.options.length) _index = deck.options.length - 1;
+      });
+    }
+    _showMessage('已加入黑名单，不再推荐这家');
   }
 
   Future<bool> _record(Restaurant restaurant) async {

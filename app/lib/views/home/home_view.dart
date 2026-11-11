@@ -23,6 +23,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
   /// 记录页 State，切到该页签时触发刷新，保证首页刚记的一笔能立刻看到。
   final _recordKey = GlobalKey<RecordViewState>();
 
+  /// 收藏页 State，切到该页签时刷新，保证刚收藏的内容立刻可见。
+  final _favoriteKey = GlobalKey<FavoriteViewState>();
+
   static const _destinations = <NavigationDestination>[
     NavigationDestination(icon: Icon(Icons.ramen_dining_outlined), label: '首页'),
     NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: '记录'),
@@ -39,7 +42,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         onOpenSettings: () => setState(() => _index = 3),
       ),
       RecordView(key: _recordKey),
-      const FavoriteView(),
+      FavoriteView(key: _favoriteKey),
       const SettingsView(),
     ];
 
@@ -58,6 +61,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           onDestinationSelected: (index) {
             setState(() => _index = index);
             if (index == 1) _recordKey.currentState?.refresh();
+            if (index == 2) _favoriteKey.currentState?.refresh();
           },
           destinations: _destinations,
         ),

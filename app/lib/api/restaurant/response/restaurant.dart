@@ -79,6 +79,24 @@ class Restaurant {
   String get naviPosition =>
       entrLocation.isNotEmpty ? entrLocation : '${lng ?? ''},${lat ?? ''}';
 
+  /// 收藏时保存的快照，避免收藏页再请求高德详情。
+  Map<String, dynamic> toSnapshot() {
+    return {
+      'poiId': poiId,
+      'name': name,
+      'address': address,
+      'cost': cost,
+      'rating': rating,
+      'tags': tags,
+      'lng': lng,
+      'lat': lat,
+      'tel': tel,
+      'openTime': openTime,
+      'entrLocation': entrLocation,
+      'photo': photo,
+    };
+  }
+
   static int? _toInt(dynamic value) {
     if (value == null) return null;
     if (value is num) return value.toInt();

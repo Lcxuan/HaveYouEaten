@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:have_you_eaten/api/blacklist/blacklist_api.dart';
+import 'package:have_you_eaten/api/favorite/favorite_api.dart';
 import 'package:have_you_eaten/api/restaurant/response/restaurant.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
+import 'package:have_you_eaten/utils/error_util.dart';
 import 'package:have_you_eaten/utils/restaurant_launcher.dart';
 
 /// 餐厅确认弹层；返回 true 表示用户点了「再来一次」。
@@ -10,6 +13,7 @@ Future<bool> showDineOutResultSheet(
   required Restaurant restaurant,
   required bool loggedIn,
   required Future<bool> Function() onRecord,
+  required Future<void> Function() onBlock,
 }) async {
   final again = await showModalBottomSheet<bool>(
     context: context,
@@ -23,6 +27,7 @@ Future<bool> showDineOutResultSheet(
       restaurant: restaurant,
       loggedIn: loggedIn,
       onRecord: onRecord,
+      onBlock: onBlock,
     ),
   );
   return again ?? false;
@@ -33,11 +38,13 @@ class _DineOutResultSheet extends StatefulWidget {
     required this.restaurant,
     required this.loggedIn,
     required this.onRecord,
+    required this.onBlock,
   });
 
   final Restaurant restaurant;
   final bool loggedIn;
   final Future<bool> Function() onRecord;
+  final Future<void> Function() onBlock;
 
   @override
   State<_DineOutResultSheet> createState() => _DineOutResultSheetState();
@@ -46,6 +53,86 @@ class _DineOutResultSheet extends StatefulWidget {
 class _DineOutResultSheetState extends State<_DineOutResultSheet> {
   bool _saving = false;
   bool _needLogin = false;
+  bool _favorited = false;
+  bool _favoriteBusy = false;
+  bool _blocking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.loggedIn) _loadFavoriteStatus();
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final favorited = await FavoriteApi.status(
+        targetType: 'restaurant',
+        targetId: widget.restaurant.poiId,
+      );
+      if (mounted) setState(() => _favorited = favorited);
+    } catch (error) {
+      debugPrint('加载收藏状态失败：$error');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteBusy) return;
+    if (!widget.loggedIn) {
+      setState(() => _needLogin = true);
+      return;
+    }
+    setState(() => _favoriteBusy = true);
+    try {
+      if (_favorited) {
+        await FavoriteApi.remove(
+          targetType: 'restaurant',
+          targetId: widget.restaurant.poiId,
+        );
+      } else {
+        await FavoriteApi.add(
+          targetType: 'restaurant',
+          targetId: widget.restaurant.poiId,
+          name: widget.restaurant.name,
+          extra: widget.restaurant.toSnapshot(),
+        );
+      }
+      if (!mounted) return;
+      setState(() => _favorited = !_favorited);
+    } catch (error) {
+      if (mounted) _showError(friendlyError(error));
+    } finally {
+      if (mounted) setState(() => _favoriteBusy = false);
+    }
+  }
+
+  Future<void> _block() async {
+    if (_blocking) return;
+    if (!widget.loggedIn) {
+      setState(() => _needLogin = true);
+      return;
+    }
+    setState(() => _blocking = true);
+    try {
+      await BlacklistApi.add(
+        scope: 'poi',
+        targetValue: widget.restaurant.poiId,
+        remark: widget.restaurant.name,
+      );
+      await widget.onBlock();
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) {
+        setState(() => _blocking = false);
+        _showError(friendlyError(error));
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,21 +154,62 @@ class _DineOutResultSheetState extends State<_DineOutResultSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            '就吃这个',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.ink,
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '就吃这个',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.ink,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _favoriteBusy ? null : _toggleFavorite,
+                tooltip: _favorited ? '取消收藏' : '收藏',
+                icon: _favoriteBusy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        _favorited
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: _favorited ? AppTheme.yolk : Colors.black45,
+                      ),
+              ),
+              PopupMenuButton<String>(
+                enabled: !_blocking,
+                tooltip: '更多',
+                onSelected: (value) {
+                  if (value == 'block') _block();
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'block',
+                    child: Row(
+                      children: [
+                        Icon(Icons.block_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('不再推荐这家'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           _RestaurantSummary(restaurant: restaurant),
           if (_needLogin) ...[
             const SizedBox(height: 10),
             const Text(
-              '请先在底部「设置」页登录后再记一笔',
+              '请先在底部「设置」页登录后再操作',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11.5, color: AppTheme.chili),
             ),
