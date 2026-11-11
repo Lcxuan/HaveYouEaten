@@ -455,17 +455,34 @@ class _IngredientRow extends StatelessWidget {
         border: Border(bottom: BorderSide(color: Color(0xFFFFF1E2))),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 5,
             child: Text(
               ingredient.name,
-              style: const TextStyle(fontSize: 12.5, color: AppTheme.ink),
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppTheme.ink,
+                height: 1.5,
+              ),
             ),
           ),
-          Text(
-            ingredient.amount,
-            style: const TextStyle(fontSize: 11.5, color: Colors.black45),
-          ),
+          if (ingredient.amount.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 4,
+              child: Text(
+                ingredient.amount,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: Colors.black45,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -481,38 +498,112 @@ class _StepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 18,
-            height: 18,
-            margin: const EdgeInsets.only(top: 2),
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppTheme.persimmon,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              '${step.order}',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                margin: const EdgeInsets.only(top: 2),
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppTheme.persimmon,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${step.order}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  step.text,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppTheme.ink,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (step.children.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(left: 27, top: 4),
+              padding: const EdgeInsets.only(left: 10),
+              decoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: Color(0xFFFFE0C2), width: 2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final child in step.children) _ChildStepRow(step: child),
+                ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChildStepRow extends StatelessWidget {
+  const _ChildStepRow({required this.step});
+
+  final RecipeStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 4,
+                height: 4,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: const BoxDecoration(
+                  color: AppTheme.persimmon,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  step.text,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black87,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              step.text,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.ink,
-                height: 1.6,
+          if (step.children.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final child in step.children) _ChildStepRow(step: child),
+                ],
               ),
             ),
-          ),
         ],
       ),
     );

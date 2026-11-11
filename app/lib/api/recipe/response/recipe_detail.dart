@@ -42,17 +42,26 @@ class RecipeIngredient {
   }
 }
 
-/// 做法步骤项：序号 + 描述。
+/// 做法步骤项：序号 + 描述，children 为子步骤。
 class RecipeStep {
-  const RecipeStep({required this.order, required this.text});
+  const RecipeStep({
+    required this.order,
+    required this.text,
+    this.children = const [],
+  });
 
   final int order;
   final String text;
+  final List<RecipeStep> children;
 
   factory RecipeStep.fromJson(Map<String, dynamic> json) {
     return RecipeStep(
       order: json['order'] as int? ?? 0,
       text: json['text'] as String? ?? '',
+      children: [
+        for (final child in (json['children'] as List? ?? const []))
+          RecipeStep.fromJson(child as Map<String, dynamic>),
+      ],
     );
   }
 }
