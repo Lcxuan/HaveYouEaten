@@ -12,6 +12,7 @@ import 'package:have_you_eaten/components/food_wheel.dart';
 import 'package:have_you_eaten/components/shake_detector.dart';
 import 'package:have_you_eaten/config/api_config.dart';
 import 'package:have_you_eaten/store/auth_store.dart';
+import 'package:have_you_eaten/store/draw_preference_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
 import 'package:have_you_eaten/utils/error_util.dart';
 import 'package:have_you_eaten/views/home/tabs/dine_out_tab.dart';
@@ -63,6 +64,7 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
 
   final _wheelKey = GlobalKey<FoodWheelState>();
   DrawFilters _filters = const DrawFilters();
+  ProviderSubscription<DrawFilters>? _prefSub;
 
   /// 接口返回的启用菜系。
   List<Cuisine> _cuisines = const [];
@@ -89,6 +91,11 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 抽签偏好来自设置页，读取完成后自动应用。
+    _filters = ref.read(drawPreferenceProvider);
+    _prefSub = ref.listenManual(drawPreferenceProvider, (_, next) {
+      if (mounted) setState(() => _filters = next);
+    });
     _loadCuisines();
     _periodTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (!mounted || _drawing) return;
@@ -117,6 +124,7 @@ class _HomeTabState extends ConsumerState<HomeTab> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _prefSub?.close();
     _periodTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();

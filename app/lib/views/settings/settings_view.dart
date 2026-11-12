@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:have_you_eaten/config/api_config.dart';
 import 'package:have_you_eaten/layout/main_layout.dart';
 import 'package:have_you_eaten/store/auth_store.dart';
+import 'package:have_you_eaten/store/draw_preference_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
 
 /// 设置页签：账号卡、偏好/黑名单入口、版本信息与退出登录，对应原型第 ⑩ 屏。
@@ -16,6 +17,7 @@ class SettingsView extends ConsumerWidget {
     final session = ref.watch(authProvider).session;
     final nickname = session?.nickname ?? '';
     final loggedIn = session != null;
+    final drawFilters = ref.watch(drawPreferenceProvider);
 
     return MainLayout(
       title: '设置',
@@ -37,8 +39,10 @@ class SettingsView extends ConsumerWidget {
               _SettingRow(
                 icon: Icons.tune_rounded,
                 label: '抽签偏好',
-                value: '未设置',
-                onTap: () => _comingSoon(context),
+                value: drawFilters.activeCount == 0
+                    ? '未设置'
+                    : '${drawFilters.activeCount} 项条件',
+                onTap: () => context.push('/settings/draw-preference'),
               ),
               _SettingRow(
                 icon: Icons.block_rounded,
@@ -77,12 +81,6 @@ class SettingsView extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('功能待实现')));
   }
 
   /// 退出登录二次确认，防止误触。

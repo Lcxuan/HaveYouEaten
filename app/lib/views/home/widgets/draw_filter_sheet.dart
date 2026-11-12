@@ -1,49 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:have_you_eaten/store/draw_preference_store.dart';
 import 'package:have_you_eaten/styles/app_theme.dart';
-
-/// 抽签筛选条件。
-class DrawFilters {
-  const DrawFilters({
-    this.tastes = const <String>{},
-    this.maxCookMinutes,
-    this.difficulty,
-  });
-
-  final Set<String> tastes;
-  final int? maxCookMinutes;
-  final int? difficulty;
-
-  /// 已启用的条件数量，用于筛选按钮角标。
-  int get activeCount =>
-      tastes.length +
-      (maxCookMinutes == null ? 0 : 1) +
-      (difficulty == null ? 0 : 1);
-
-  DrawFilters toggleTaste(String taste) {
-    final next = Set<String>.from(tastes);
-    if (!next.remove(taste)) next.add(taste);
-    return DrawFilters(
-      tastes: next,
-      maxCookMinutes: maxCookMinutes,
-      difficulty: difficulty,
-    );
-  }
-
-  DrawFilters withMaxCookMinutes(int? value) => DrawFilters(
-    tastes: tastes,
-    maxCookMinutes: value,
-    difficulty: difficulty,
-  );
-
-  DrawFilters withDifficulty(int? value) => DrawFilters(
-    tastes: tastes,
-    maxCookMinutes: maxCookMinutes,
-    difficulty: value,
-  );
-
-  DrawFilters reset() => const DrawFilters();
-}
 
 /// 打开筛选面板，返回 null 表示取消。
 Future<DrawFilters?> showDrawFilterSheet(

@@ -6,6 +6,7 @@ import 'package:have_you_eaten/views/auth/register_view.dart';
 import 'package:have_you_eaten/views/home/home_view.dart';
 import 'package:have_you_eaten/views/recipe/recipe_detail_view.dart';
 import 'package:have_you_eaten/views/settings/blacklist_view.dart';
+import 'package:have_you_eaten/views/settings/draw_preference_view.dart';
 
 /// 负责创建 GoRouter 并集中维护路由表。
 final GoRouter appRouter = GoRouter(
@@ -40,6 +41,12 @@ final GoRouter appRouter = GoRouter(
       path: '/settings/blacklist',
       name: 'blacklist',
       builder: (context, state) => const BlacklistView(),
+    ),
+    // 抽签偏好
+    GoRoute(
+      path: '/settings/draw-preference',
+      name: 'drawPreference',
+      builder: (context, state) => const DrawPreferenceView(),
     ),
   ],
   errorBuilder: (context, state) => _RouteErrorView(path: state.uri.path),
