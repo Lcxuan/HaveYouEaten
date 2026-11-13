@@ -6,7 +6,7 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:postgresql://127.0.0.1:5432/have_you_eaten
     username: postgres
-    password: ${POSTGRES_PASSWORD}
+    password: ${POSTGRES_PASSWORD:123456}
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
