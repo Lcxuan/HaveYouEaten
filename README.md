@@ -1,5 +1,7 @@
 # Have You Eaten（吃了吗？）
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > 一个帮你决定「在家做还是出去吃」的双场景 App。
 
 ## 项目介绍
@@ -151,3 +153,8 @@ flutter build ios --release --dart-define-from-file=config/config.json     # iOS
 
 - **菜系与菜谱**：来自开源项目 [HowToCook](https://github.com/Anduin2017/HowToCook)。
 - **餐厅**：来自高德 POI 2.0 周边搜索。
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 开源，Copyright (c) 2026 Lcxuan。
+
